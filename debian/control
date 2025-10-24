@@ -1,0 +1,23 @@
+Source: radxa-penta-fan-ctrl
+Section: utils
+Priority: optional
+Maintainer: Francisco Javier Acosta Padilla <fco.ja.ac@gmail.com>
+Build-Depends: debhelper-compat (= 13), cmake, libgpiod-dev (>= 1.6), g++, git
+Standards-Version: 4.6.0
+Homepage: https://github.com/kYc0o/radxa-penta-sata-hat-top-board-ctrl-c
+
+Package: radxa-penta-fan-ctrl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, smartmontools
+Description: Fan control daemon for Penta SATA HAT top board
+ This daemon monitors CPU and SSD temperatures and controls the fan
+ speed and OLED display on the Penta SATA HAT top board accessory.
+ Compatible with Raspberry Pi 4/5, ROCK Pi 4/5, and other supported boards.
+ .
+ Features:
+  - Smart thermal control with hysteresis and trend analysis
+  - Automatic fan speed control based on temperature
+  - OLED display with system info, disk temps, and RAID status
+  - Support for both hardware and software PWM
+  - Configurable temperature thresholds and thermal tunables
+  - SystemD service integration

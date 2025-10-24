@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|deconfigure)
+    echo "Stopping radxa-penta-fan-ctrl service..."
+        if [ -d /run/systemd/system ]; then
+            systemctl stop radxa-penta-fan-ctrl.service || true
+            systemctl disable radxa-penta-fan-ctrl.service || true
+            systemctl daemon-reload || true
+        fi
+        echo "Service stopped and disabled"
+        ;;
+
+    upgrade|failed-upgrade)
+        # Don't stop service during upgrade
+        ;;
+
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

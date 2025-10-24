@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# Ensure third-party submodules are present (no network in Debian builds; content must be included)
+	-git submodule update --init --recursive
+	dh_auto_configure -- -DCMAKE_INSTALL_PREFIX=/usr
+
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/radxa-penta-fan-ctrl

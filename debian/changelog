@@ -1,0 +1,13 @@
+radxa-penta-fan-ctrl (1.0.0-1) unstable; urgency=medium
+
+  * Initial Release
+  * Fan control daemon for Penta SATA HAT top board
+  * Smart thermal control with asymmetric ramping and trend analysis
+  * Cooldown hold mechanism to prevent rapid fan off cycles
+  * Temperature-based fan speed control with configurable thresholds
+  * OLED display with system info, disk temps, and RAID status
+  * Hardware and software PWM support (25 kHz frequency)
+  * Two-level debug logging (RADXA_DEBUG=1 for normal, =2 for verbose)
+  * Compatible with Raspberry Pi 4/5, ROCK Pi, and other boards
+
+ -- Francisco Javier Acosta Padilla <fco.ja.ac@gmail.com>  Wed, 22 Oct 2025 00:00:00 +0000

@@ -1,0 +1,56 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # Detect board model
+        model=$(tr -d '\0' </proc/device-tree/model 2>/dev/null || echo "Unknown")
+        
+    echo "Installing radxa-penta-fan-ctrl for: $model"
+        
+        # Configure based on board model
+        case "$model" in
+        *"Raspberry Pi 5"*)
+            echo "Detected Raspberry Pi 5"
+            # Enable I2C if raspi-config is available
+            command -v raspi-config >/dev/null && raspi-config nonint do_i2c 0 >/dev/null 2>&1 || true
+            ;;
+        *"Raspberry Pi 4"*)
+            echo "Detected Raspberry Pi 4"
+            command -v raspi-config >/dev/null && raspi-config nonint do_i2c 0 >/dev/null 2>&1 || true
+            ;;
+        *"ROCK"*)
+            echo "Detected ROCK series board"
+            # ROCK boards usually have I2C already enabled
+            ;;
+        *)
+            echo "Unknown board model, proceeding with generic configuration"
+            ;;
+        esac
+        
+    # Ensure config directory exists with proper permissions
+    mkdir -p /etc/radxa-penta-fan-ctrl
+        
+        # Enable and start the service
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload || true
+            systemctl enable radxa-penta-fan-ctrl.service || true
+            systemctl restart radxa-penta-fan-ctrl.service || true
+            echo "Service enabled and started"
+        fi
+        
+        echo "Installation complete!"
+        echo "Check status with: systemctl status radxa-penta-fan-ctrl"
+        echo "View logs with: journalctl -u radxa-penta-fan-ctrl -f"
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
