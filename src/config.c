@@ -9,16 +9,6 @@
 #include <ctype.h>
 #include "config.h"
 
-static double read_env_float(const char *name, double fallback) {
-    const char *v = getenv(name);
-    if (v && *v) {
-        char *endp = NULL;
-        double val = strtod(v, &endp);
-        if (endp != v) return val;
-    }
-    return fallback;
-}
-
 static void trim(char *str) {
     char *end;
     while(isspace((unsigned char)*str)) str++;
@@ -77,6 +67,9 @@ int config_load(config_t *cfg) {
         
         cfg->fan_enabled = 1;
 
+        // OLED defaults
+        cfg->oled_rotate = 0;
+
         // Thermal tunable defaults
         cfg->thermal.hysteresis_c = 3.0;
         cfg->thermal.deadband_c = 1.5;
@@ -89,18 +82,6 @@ int config_load(config_t *cfg) {
         cfg->thermal.up_rate_max_per_cycle = 0.30;    // cap at 30% per cycle
         cfg->thermal.down_rate_per_cycle = 0.05;      // 5% per cycle down (gentle deceleration)
         cfg->thermal.cooldown_hold_sec = 20.0;        // 20s hold before decreasing
-
-        // Apply environment overrides even if file missing
-        cfg->thermal.hysteresis_c = read_env_float("RADXA_HYSTERESIS_C", cfg->thermal.hysteresis_c);
-        cfg->thermal.deadband_c = read_env_float("RADXA_DEADBAND_C", cfg->thermal.deadband_c);
-        cfg->thermal.trend_heat_c = read_env_float("RADXA_TREND_HEAT_C", cfg->thermal.trend_heat_c);
-        cfg->thermal.trend_fast_heat_c = read_env_float("RADXA_TREND_FAST_HEAT_C", cfg->thermal.trend_fast_heat_c);
-        cfg->thermal.max_dc_change_per_cycle = read_env_float("RADXA_MAX_DC_CHANGE", cfg->thermal.max_dc_change_per_cycle);
-        cfg->thermal.up_rate_base_per_cycle = read_env_float("RADXA_UP_RATE_BASE", cfg->thermal.up_rate_base_per_cycle);
-        cfg->thermal.up_rate_trend_gain = read_env_float("RADXA_UP_RATE_TREND_GAIN", cfg->thermal.up_rate_trend_gain);
-        cfg->thermal.up_rate_max_per_cycle = read_env_float("RADXA_UP_RATE_MAX", cfg->thermal.up_rate_max_per_cycle);
-        cfg->thermal.down_rate_per_cycle = read_env_float("RADXA_DOWN_RATE", cfg->thermal.down_rate_per_cycle);
-        cfg->thermal.cooldown_hold_sec = read_env_float("RADXA_COOLDOWN_HOLD_SEC", cfg->thermal.cooldown_hold_sec);
         return 0;
     }
     
@@ -120,6 +101,9 @@ int config_load(config_t *cfg) {
     cfg->fan_ssd.lv3 = 60.0;
     
     cfg->fan_enabled = 1;
+
+    // OLED defaults
+    cfg->oled_rotate = 0;
 
     // Thermal tunable defaults
     cfg->thermal.hysteresis_c = 3.0;
@@ -158,23 +142,19 @@ int config_load(config_t *cfg) {
                 else if (strcmp(key, "up_rate_max") == 0) cfg->thermal.up_rate_max_per_cycle = strtod(value, NULL);
                 else if (strcmp(key, "down_rate") == 0) cfg->thermal.down_rate_per_cycle = strtod(value, NULL);
                 else if (strcmp(key, "cooldown_hold_sec") == 0) cfg->thermal.cooldown_hold_sec = strtod(value, NULL);
+            } else if (strcmp(section, "oled") == 0) {
+                if (strcmp(key, "rotate") == 0) {
+                    cfg->oled_rotate = (strcmp(value, "true") == 0 || strcmp(value, "1") == 0) ? 1 : 0;
+                    if (getenv("RADXA_DEBUG")) {
+                        fprintf(stderr, "[Config] OLED rotate: '%s' -> %d\n", value, cfg->oled_rotate);
+                    }
+                }
             }
         }
     }
     
     fclose(fp);
 
-    // Apply environment overrides (higher precedence than file)
-    cfg->thermal.hysteresis_c = read_env_float("RADXA_HYSTERESIS_C", cfg->thermal.hysteresis_c);
-    cfg->thermal.deadband_c = read_env_float("RADXA_DEADBAND_C", cfg->thermal.deadband_c);
-    cfg->thermal.trend_heat_c = read_env_float("RADXA_TREND_HEAT_C", cfg->thermal.trend_heat_c);
-    cfg->thermal.trend_fast_heat_c = read_env_float("RADXA_TREND_FAST_HEAT_C", cfg->thermal.trend_fast_heat_c);
-    cfg->thermal.max_dc_change_per_cycle = read_env_float("RADXA_MAX_DC_CHANGE", cfg->thermal.max_dc_change_per_cycle);
-    cfg->thermal.up_rate_base_per_cycle = read_env_float("RADXA_UP_RATE_BASE", cfg->thermal.up_rate_base_per_cycle);
-    cfg->thermal.up_rate_trend_gain = read_env_float("RADXA_UP_RATE_TREND_GAIN", cfg->thermal.up_rate_trend_gain);
-    cfg->thermal.up_rate_max_per_cycle = read_env_float("RADXA_UP_RATE_MAX", cfg->thermal.up_rate_max_per_cycle);
-    cfg->thermal.down_rate_per_cycle = read_env_float("RADXA_DOWN_RATE", cfg->thermal.down_rate_per_cycle);
-    cfg->thermal.cooldown_hold_sec = read_env_float("RADXA_COOLDOWN_HOLD_SEC", cfg->thermal.cooldown_hold_sec);
     return 0;
 }
 

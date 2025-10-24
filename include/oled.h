@@ -33,6 +33,7 @@ typedef struct {
 } oled_t;
 
 int oled_init(oled_t *oled);
+void oled_set_rotation(oled_t *oled, int rotate_180);
 void oled_cleanup(oled_t *oled);
 void oled_welcome(oled_t *oled);
 void oled_goodbye(oled_t *oled);

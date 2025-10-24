@@ -103,6 +103,12 @@ int main(int argc, char *argv[]) {
     
     // Try to initialize OLED
     if (oled_init(&oled) == 0) {
+        // Apply OLED rotation from config
+        oled_set_rotation(&oled, cfg.oled_rotate);
+        if (getenv("RADXA_DEBUG")) {
+            fprintf(stderr, "[Main] OLED rotation applied: %d\n", cfg.oled_rotate);
+        }
+        
         use_oled = 1;
         oled_welcome(&oled);
         

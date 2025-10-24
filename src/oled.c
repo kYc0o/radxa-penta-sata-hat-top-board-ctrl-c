@@ -44,6 +44,21 @@ int oled_init(oled_t *oled) {
     return 0;
 }
 
+void oled_set_rotation(oled_t *oled, int rotate_180) {
+    if (!oled->initialized) return;
+    
+    oled->rotate_180 = rotate_180;
+    
+    // Apply 180-degree rotation if configured
+    if (oled->rotate_180) {
+        ssd1306_flipHorizontal(1);
+        ssd1306_flipVertical(1);
+    } else {
+        ssd1306_flipHorizontal(0);
+        ssd1306_flipVertical(0);
+    }
+}
+
 void oled_cleanup(oled_t *oled) {
     if (oled->initialized) {
         ssd1306_clearScreen();

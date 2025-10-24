@@ -57,21 +57,23 @@ dkms.conf
 # ---- Project-specific ignores (CMake, Debian packaging, IDEs) ----
 # Build artifacts
 build/
+obj-aarch64-linux-gnu/
 *.so
 *.a
 rockpi-penta
 
 # Debian packaging
 debian/.debhelper/
-debian/rockpi-penta/
-debian/files
+debian/radxa-penta-fan-ctrl/
+debian/*.deb
+debian/*.ddeb
+debian/*.changes
+debian/*.buildinfo
 debian/*.log
 debian/*.substvars
+debian/*.postrm.debhelper
 debian/debhelper-build-stamp
-*.deb
-*.ddeb
-*.changes
-*.buildinfo
+debian/files
 
 # CMake
 CMakeCache.txt

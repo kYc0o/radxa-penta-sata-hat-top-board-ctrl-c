@@ -44,6 +44,7 @@ typedef struct {
     fan_config_t fan_ssd;
     int fan_enabled;
     thermal_tunables_t thermal;    // New thermal tunables
+    int oled_rotate;                // OLED 180 degree rotation (default 0)
 } config_t;
 
 int config_load(config_t *cfg);
