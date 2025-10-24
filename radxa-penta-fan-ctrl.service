@@ -1,0 +1,15 @@
+[Unit]
+Description=Radxa Penta SATA HAT Fan Controller
+After=multi-user.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+EnvironmentFile=/etc/radxa-penta-fan-ctrl/radxa-penta-fan-ctrl.env
+ExecStart=/usr/bin/radxa-penta-fan-ctrl
+
+[Install]
+WantedBy=multi-user.target
