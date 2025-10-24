@@ -9,41 +9,46 @@
 #include <ctype.h>
 #include "config.h"
 
-static void trim(char *str) {
+static char* trim(char *str) {
     char *end;
+    // Trim leading whitespace
     while(isspace((unsigned char)*str)) str++;
-    if(*str == 0) return;
+    if(*str == 0) return str;
+    // Trim trailing whitespace
     end = str + strlen(str) - 1;
     while(end > str && isspace((unsigned char)*end)) end--;
     end[1] = '\0';
+    return str;
 }
 
 static int parse_line(const char *line, char *section, char *key, char *value) {
     char buf[MAX_LINE];
     strncpy(buf, line, MAX_LINE - 1);
     buf[MAX_LINE - 1] = '\0';
-    trim(buf);
+    char *trimmed_buf = trim(buf);
     
-    if (buf[0] == '#' || buf[0] == ';' || buf[0] == '\0') {
+    if (trimmed_buf[0] == '#' || trimmed_buf[0] == ';' || trimmed_buf[0] == '\0') {
         return 0; // Comment or empty
     }
     
-    if (buf[0] == '[') {
-        char *end = strchr(buf, ']');
+    if (trimmed_buf[0] == '[') {
+        char *end = strchr(trimmed_buf, ']');
         if (end) {
             *end = '\0';
-            strcpy(section, buf + 1);
+            strcpy(section, trimmed_buf + 1);
             return 1;
         }
     }
     
-    char *eq = strchr(buf, '=');
+    char *eq = strchr(trimmed_buf, '=');
     if (eq) {
         *eq = '\0';
-        strcpy(key, buf);
+        strcpy(key, trimmed_buf);
         strcpy(value, eq + 1);
-        trim(key);
-        trim(value);
+        char *trimmed_key = trim(key);
+        char *trimmed_value = trim(value);
+        strcpy(key, trimmed_key);
+        strcpy(value, trimmed_value);
         return 2;
     }
     
