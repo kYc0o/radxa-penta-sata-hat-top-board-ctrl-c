@@ -135,10 +135,10 @@ Edit `/etc/radxa-penta-fan-ctrl/radxa-penta-fan-ctrl.conf`:
 [fan]
 # CPU temperature thresholds (Celsius)
 # Optimized for Raspberry Pi 5 (throttles at 85°C)
-lv0 = 55  # First activation (35% fan speed)
-lv1 = 62  # Moderate load (50% fan speed)
-lv2 = 70  # High load (75% fan speed)
-lv3 = 78  # Maximum (100% fan speed)
+lv0 = 55  # First activation
+lv1 = 62  # Moderate load
+lv2 = 70  # High load
+lv3 = 78  # Maximum
 
 [fan_ssd]
 # SSD temperature thresholds (Celsius)
@@ -163,9 +163,8 @@ You can fine-tune ramp behavior and cooling hold in the `[thermal]` section of t
 - `deadband` (`RADXA_DEADBAND_C`): Ignore small fluctuations ±°C. Default: `1.5`.
 - `trend_heat` (`RADXA_TREND_HEAT_C`): Trend considered heating. Default: `0.3`.
 - `trend_fast_heat` (`RADXA_TREND_FAST_HEAT_C`): Trend for fast heating. Default: `1.0`.
-- `min_effective_dc` (`RADXA_MIN_EFFECTIVE_DC`): Minimum effective duty (fraction). Default: `0.35`.
 
-Asymmetric and adaptive ramping:
+**Asymmetric and adaptive ramping:**
 - `up_rate_base` (`RADXA_UP_RATE_BASE`): Base ramp-up per cycle (fraction). Default: `0.07` (7%).
 - `up_rate_trend_gain` (`RADXA_UP_RATE_TREND_GAIN`): Extra ramp per +1°C positive trend. Default: `0.20` (20%, responsive to rapid heating).
 - `up_rate_max` (`RADXA_UP_RATE_MAX`): Cap on ramp-up per cycle. Default: `0.30` (30%).
@@ -251,7 +250,6 @@ MIT License - see LICENSE file
 
 - **Original Python version**: [Radxa penta-fan-ctrl](https://github.com/radxa/penta-fan-ctrl)
 - **OLED Library**: [lexus2k/ssd1306](https://github.com/lexus2k/ssd1306)
-- **C Rewrite & Advanced Thermal**: This project
 
 ## 🔗 Links
 

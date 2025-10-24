@@ -53,3 +53,46 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# ---- Project-specific ignores (CMake, Debian packaging, IDEs) ----
+# Build artifacts
+build/
+*.so
+*.a
+rockpi-penta
+
+# Debian packaging
+debian/.debhelper/
+debian/rockpi-penta/
+debian/files
+debian/*.log
+debian/*.substvars
+debian/debhelper-build-stamp
+*.deb
+*.ddeb
+*.changes
+*.buildinfo
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python (if any test scripts)
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs and backups
+*.log
+*.bak
+*.orig
