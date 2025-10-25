@@ -11,6 +11,7 @@
 
 #define THERMAL_ZONE_PATH "/sys/class/thermal/thermal_zone0/temp"
 #define SMARTCTL_CMD "smartctl -A /dev/%s 2>/dev/null"
+#define SSD_TEMP_CACHE_SEC 5  // Only read SSD temps every 5 seconds
 
 // Temperature history for moving average and trend analysis
 #define TEMP_HISTORY_SIZE 10
@@ -30,7 +31,7 @@ typedef struct {
 } thermal_state_t;
 
 double thermal_read_cpu_temp(void);
-int thermal_read_ssd_temps(int *temps, int max_count);
+int thermal_read_ssd_temps(int *temps, size_t max_count);
 double thermal_calculate_duty_cycle(config_t *cfg);
 double thermal_calculate_duty_cycle_smart(config_t *cfg, thermal_state_t *state);
 void thermal_state_init(thermal_state_t *state);
