@@ -10,7 +10,7 @@
 #include "config.h"
 
 #define PWM_PERIOD_US 40
-#define GPIO_PERIOD_S 0.00004f  // 40µs = 25 kHz (standard PWM fan frequency)
+#define GPIO_PERIOD_S 0.002f  // 2ms = 500 Hz (low PWM fan frequency)
 
 typedef struct {
     int use_hardware_pwm;

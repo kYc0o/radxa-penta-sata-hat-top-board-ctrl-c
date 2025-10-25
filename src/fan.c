@@ -1,4 +1,4 @@
-/* 
+/*
  * SPDX-License-Identifier: MIT
  * Copyright (c) 2025 Francisco Javier Acosta Padilla
  */
@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <gpiod.h>
 #include <math.h>
+#include <time.h>
 #include "fan.h"
 
 // Check gpiod version
@@ -22,7 +23,7 @@ static void* gpio_pwm_thread(void *arg);
 
 int fan_init(fan_t *fan) {
     memset(fan, 0, sizeof(fan_t));
-    
+
     // Read environment variables
     const char *hwpwm = getenv("HARDWARE_PWM");
     const char *pwmchip = getenv("PWMCHIP");
@@ -30,7 +31,7 @@ int fan_init(fan_t *fan) {
     const char *fan_line = getenv("FAN_LINE");
     const char *dbg = getenv("RADXA_DEBUG");
     int debug_verbose = (dbg && strcmp(dbg, "2") == 0);
-    
+
     fan->use_hardware_pwm = (hwpwm && strcmp(hwpwm, "1") == 0);
     fan->pwm_chip = pwmchip ? atoi(pwmchip) : 0;
     fan->gpio_chip = fan_chip ? atoi(fan_chip) : 0;
@@ -38,23 +39,23 @@ int fan_init(fan_t *fan) {
     fan->period_s = GPIO_PERIOD_S;
     fan->duty_cycle = 0.0;
     fan->running = 1;
-    
+
     if (fan->use_hardware_pwm) {
         // Hardware PWM setup
-        snprintf(fan->pwm_path, sizeof(fan->pwm_path), 
+        snprintf(fan->pwm_path, sizeof(fan->pwm_path),
                  "/sys/class/pwm/pwmchip%d/pwm0", fan->pwm_chip);
-        
+
         char export_path[256];
-        snprintf(export_path, sizeof(export_path), 
+        snprintf(export_path, sizeof(export_path),
                  "/sys/class/pwm/pwmchip%d/export", fan->pwm_chip);
-        
+
         // Try to export PWM
         FILE *fp = fopen(export_path, "w");
         if (fp) {
             fprintf(fp, "0");
             fclose(fp);
         }
-        
+
         // Set period
         char period_path[300];
         snprintf(period_path, sizeof(period_path), "%s/period", fan->pwm_path);
@@ -66,7 +67,7 @@ int fan_init(fan_t *fan) {
         fan->pwm_period_ns = PWM_PERIOD_US * 1000;
         fprintf(fp, "%d", fan->pwm_period_ns);
         fclose(fp);
-        
+
         // Enable PWM
         char enable_path[300];
         snprintf(enable_path, sizeof(enable_path), "%s/enable", fan->pwm_path);
@@ -75,8 +76,8 @@ int fan_init(fan_t *fan) {
             fprintf(fp, "1");
             fclose(fp);
         }
-        
-        printf("Fan initialized with hardware PWM (pwmchip%d, period %dus)\n", 
+
+        printf("Fan initialized with hardware PWM (pwmchip%d, period %dus)\n",
                fan->pwm_chip, PWM_PERIOD_US);
         if (debug_verbose) {
             char dbg_period_path[300];
@@ -94,13 +95,13 @@ int fan_init(fan_t *fan) {
         // GPIO software PWM setup
         char chip_path[64];
         snprintf(chip_path, sizeof(chip_path), "/dev/gpiochip%d", fan->gpio_chip);
-        
+
         fan->chip = gpiod_chip_open(chip_path);
         if (!fan->chip) {
             fprintf(stderr, "Error: Cannot open GPIO chip %s\n", chip_path);
             return -1;
         }
-        
+
         // gpiod 2.x API
         struct gpiod_line_settings *settings = gpiod_line_settings_new();
         if (!settings) {
@@ -108,10 +109,10 @@ int fan_init(fan_t *fan) {
             gpiod_chip_close(fan->chip);
             return -1;
         }
-        
+
         gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_OUTPUT);
         gpiod_line_settings_set_output_value(settings, GPIOD_LINE_VALUE_INACTIVE);
-        
+
         struct gpiod_line_config *line_cfg = gpiod_line_config_new();
         if (!line_cfg) {
             fprintf(stderr, "Error: Cannot create line config\n");
@@ -119,9 +120,9 @@ int fan_init(fan_t *fan) {
             gpiod_chip_close(fan->chip);
             return -1;
         }
-        
+
         gpiod_line_config_add_line_settings(line_cfg, &fan->gpio_line, 1, settings);
-        
+
         struct gpiod_request_config *req_cfg = gpiod_request_config_new();
         if (!req_cfg) {
             fprintf(stderr, "Error: Cannot create request config\n");
@@ -130,21 +131,21 @@ int fan_init(fan_t *fan) {
             gpiod_chip_close(fan->chip);
             return -1;
         }
-        
+
     gpiod_request_config_set_consumer(req_cfg, "radxa-penta-fan-ctrl-fan");
-        
+
         fan->line = (struct gpiod_line *)gpiod_chip_request_lines(fan->chip, req_cfg, line_cfg);
-        
+
         gpiod_request_config_free(req_cfg);
         gpiod_line_config_free(line_cfg);
         gpiod_line_settings_free(settings);
-        
+
         if (!fan->line) {
             fprintf(stderr, "Error: Cannot request GPIO line %d\n", fan->gpio_line);
             gpiod_chip_close(fan->chip);
             return -1;
         }
-        
+
         // Start PWM thread
         pthread_t thread;
         if (pthread_create(&thread, NULL, gpio_pwm_thread, fan) != 0) {
@@ -153,14 +154,14 @@ int fan_init(fan_t *fan) {
             return -1;
         }
         pthread_detach(thread);
-        
-        printf("Fan initialized with software PWM (GPIO chip %d, line %d)\n", 
+
+        printf("Fan initialized with software PWM (GPIO chip %d, line %d)\n",
                fan->gpio_chip, fan->gpio_line);
         if (debug_verbose) {
             printf("[DEBUG][PWM/SW] period_s=%.3f initial_duty=%.0f%%\n", fan->period_s, fan->duty_cycle * 100.0);
         }
     }
-    
+
     return 0;
 }
 
@@ -170,18 +171,18 @@ int fan_set_duty_cycle(fan_t *fan, double duty) {
     double requested = duty;
     if (duty < 0.0) duty = 0.0;
     if (duty > 1.0) duty = 1.0;
-    
+
     fan->duty_cycle = duty;
-    
+
     if (fan->use_hardware_pwm) {
         char duty_path[300];
         snprintf(duty_path, sizeof(duty_path), "%s/duty_cycle", fan->pwm_path);
-        
+
         FILE *fp = fopen(duty_path, "w");
         if (!fp) {
             return -1;
         }
-        
+
     int duty_ns = (int)((double)fan->pwm_period_ns * duty);
         fprintf(fp, "%d", duty_ns);
         fclose(fp);
@@ -206,44 +207,59 @@ int fan_set_duty_cycle(fan_t *fan, double duty) {
          fan->duty_cycle * fan->period_s * 1000.0,
          (1.0 - fan->duty_cycle) * fan->period_s * 1000.0);
     }
-    
+
     return 0;
 }
 
 static void* gpio_pwm_thread(void *arg) {
     fan_t *fan = (fan_t *)arg;
     struct gpiod_line_request *request = (struct gpiod_line_request *)fan->line;
-    const char *dbg = getenv("RADXA_DEBUG");
-    int debug_verbose = (dbg && strcmp(dbg, "2") == 0);
-    double last_dc = -1.0;
-    
+
+    // Pre-calculate timing structures
+    struct timespec ts_high, ts_low, ts_full;
+    double last_duty = -1.0;
+
     while (fan->running) {
-        if (debug_verbose && fabs(fan->duty_cycle - last_dc) > 0.001) {
-            printf("[DEBUG][PWM/SW-LOOP] duty=%.0f%% period=%.0fms\n", fan->duty_cycle * 100.0, fan->period_s * 1000.0);
-            last_dc = fan->duty_cycle;
+        // Only recalculate timings if duty cycle changed
+        if (fabs(fan->duty_cycle - last_duty) > 0.001) {
+            double period_ns = fan->period_s * 1e9;
+            double high_ns = fan->duty_cycle * period_ns;
+            double low_ns = (1.0 - fan->duty_cycle) * period_ns;
+
+            ts_high.tv_sec = 0;
+            ts_high.tv_nsec = (long)high_ns;
+            ts_low.tv_sec = 0;
+            ts_low.tv_nsec = (long)low_ns;
+            ts_full.tv_sec = 0;
+            ts_full.tv_nsec = (long)period_ns;
+
+            last_duty = fan->duty_cycle;
         }
+
         if (fan->duty_cycle <= 0.001) {
+            // Fan off - sleep full period
             gpiod_line_request_set_value(request, fan->gpio_line, GPIOD_LINE_VALUE_INACTIVE);
-            usleep((unsigned int)(fan->period_s * 1000000.0));
-        } else {
-            double high_time = fan->duty_cycle * fan->period_s;
-            double low_time = (1.0 - fan->duty_cycle) * fan->period_s;
-            
+            nanosleep(&ts_full, NULL);
+        } else if (fan->duty_cycle >= 0.999) {
+            // Fan full speed - keep high
             gpiod_line_request_set_value(request, fan->gpio_line, GPIOD_LINE_VALUE_ACTIVE);
-            usleep((unsigned int)(high_time * 1000000.0));
-            
+            nanosleep(&ts_full, NULL);
+        } else {
+            // Normal PWM
+            gpiod_line_request_set_value(request, fan->gpio_line, GPIOD_LINE_VALUE_ACTIVE);
+            nanosleep(&ts_high, NULL);
             gpiod_line_request_set_value(request, fan->gpio_line, GPIOD_LINE_VALUE_INACTIVE);
-            usleep((unsigned int)(low_time * 1000000.0));
+            nanosleep(&ts_low, NULL);
         }
     }
-    
+
     return NULL;
 }
 
 void fan_cleanup(fan_t *fan) {
     fan->running = 0;
     usleep(100000); // Give thread time to exit
-    
+
     if (!fan->use_hardware_pwm && fan->chip) {
         if (fan->line) {
             gpiod_line_request_release((struct gpiod_line_request *)fan->line);
