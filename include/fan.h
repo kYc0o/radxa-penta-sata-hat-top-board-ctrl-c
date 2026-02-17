@@ -1,4 +1,4 @@
-/* 
+/*
  * SPDX-License-Identifier: MIT
  * Copyright (c) 2025 Francisco Javier Acosta Padilla
  */
@@ -9,19 +9,20 @@
 #include <gpiod.h>
 #include "config.h"
 
-#define PWM_PERIOD_US 40
-#define GPIO_PERIOD_S 0.002f  // 2ms = 500 Hz (low PWM fan frequency)
+#define PWM_PERIOD_US 40  // 40µs = 25 kHz (standard for PC PWM fans like Noctua)
+#define GPIO_PERIOD_S 0.01f  // 10ms = 100 Hz (RPi 5 requirement for Radxa Penta fan)
 
 typedef struct {
     int use_hardware_pwm;
     int pwm_chip;
+    int pwm_channel;
     int gpio_chip;
     unsigned int gpio_line;
-    
+
     // For hardware PWM
     char pwm_path[256];
     int pwm_period_ns;
-    
+
     // For software PWM (GPIO)
     struct gpiod_chip *chip;
     struct gpiod_line *line;

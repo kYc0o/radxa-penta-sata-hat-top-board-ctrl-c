@@ -27,6 +27,7 @@ int fan_init(fan_t *fan) {
     // Read environment variables
     const char *hwpwm = getenv("HARDWARE_PWM");
     const char *pwmchip = getenv("PWMCHIP");
+    const char *pwmchan = getenv("PWMCHAN");
     const char *fan_chip = getenv("FAN_CHIP");
     const char *fan_line = getenv("FAN_LINE");
     const char *dbg = getenv("RADXA_DEBUG");
@@ -34,6 +35,7 @@ int fan_init(fan_t *fan) {
 
     fan->use_hardware_pwm = (hwpwm && strcmp(hwpwm, "1") == 0);
     fan->pwm_chip = pwmchip ? atoi(pwmchip) : 0;
+    fan->pwm_channel = pwmchan ? atoi(pwmchan) : 0;
     fan->gpio_chip = fan_chip ? atoi(fan_chip) : 0;
     fan->gpio_line = fan_line ? (unsigned int)strtoul(fan_line, NULL, 10) : 27u;
     fan->period_s = GPIO_PERIOD_S;
@@ -43,23 +45,23 @@ int fan_init(fan_t *fan) {
     if (fan->use_hardware_pwm) {
         // Hardware PWM setup
         snprintf(fan->pwm_path, sizeof(fan->pwm_path),
-                 "/sys/class/pwm/pwmchip%d/pwm0", fan->pwm_chip);
+                 "/sys/class/pwm/pwmchip%d/pwm%d", fan->pwm_chip, fan->pwm_channel);
 
         char export_path[256];
         snprintf(export_path, sizeof(export_path),
                  "/sys/class/pwm/pwmchip%d/export", fan->pwm_chip);
 
-        // Try to export PWM
+        // Try to export PWM channel
         FILE *fp = fopen(export_path, "w");
         if (fp) {
-            fprintf(fp, "0");
+            fprintf(fp, "%d", fan->pwm_channel);
             fclose(fp);
         }
 
         // Set period
         char period_path[300];
         snprintf(period_path, sizeof(period_path), "%s/period", fan->pwm_path);
-        fp = fopen(period_path, "r");
+        fp = fopen(period_path, "w");
         if (!fp) {
             fprintf(stderr, "Error: Cannot open PWM period file\n");
             return -1;
@@ -77,8 +79,8 @@ int fan_init(fan_t *fan) {
             fclose(fp);
         }
 
-        printf("Fan initialized with hardware PWM (pwmchip%d, period %dus)\n",
-               fan->pwm_chip, PWM_PERIOD_US);
+        printf("Fan initialized with hardware PWM (pwmchip%d/pwm%d, period %dus)\n",
+               fan->pwm_chip, fan->pwm_channel, PWM_PERIOD_US);
         if (debug_verbose) {
             char dbg_period_path[300];
             snprintf(dbg_period_path, sizeof(dbg_period_path), "%s/period", fan->pwm_path);
@@ -183,7 +185,8 @@ int fan_set_duty_cycle(fan_t *fan, double duty) {
             return -1;
         }
 
-    int duty_ns = (int)((double)fan->pwm_period_ns * duty);
+        // Standard PWM duty cycle for Noctua 4-pin PWM fans
+        int duty_ns = (int)((double)fan->pwm_period_ns * duty);
         fprintf(fp, "%d", duty_ns);
         fclose(fp);
         if (debug_verbose) {
