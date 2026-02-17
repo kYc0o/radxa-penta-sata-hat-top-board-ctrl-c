@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     pthread_t oled_thread;
     pthread_t button_thread;
 
-    printf("Radxa Penta Fan Controller v1.0.1\n");
+    printf("Radxa Penta Fan Controller v1.0.2\n");
     printf("===============================\n\n");
 
     // Load environment variables

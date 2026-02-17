@@ -1,3 +1,28 @@
+radxa-penta-fan-ctrl (1.0.2-1) unstable; urgency=medium
+
+  * Add hardware PWM channel configuration support:
+    - New PWMCHAN environment variable for selecting PWM channel (pwm0/pwm1/pwm2/pwm3)
+    - Enables use of GPIO13 (PWM0_CHAN1) on Raspberry Pi 5 for hardware PWM
+    - Improved logging shows both chip and channel (e.g., pwmchip0/pwm1)
+  * Critical bug fix:
+    - Fixed PWM period file opened in read mode but code tried to write
+    - This bug prevented hardware PWM initialization on all platforms
+  * Hardware PWM optimization:
+    - True 25 kHz hardware PWM for Noctua and other PC PWM fans
+    - Eliminates software PWM thread (reduces from 4 to 1 task)
+    - Zero CPU overhead for PWM generation
+  * Raspberry Pi 5 hardware modification instructions:
+    - Move the 35Ω resistor below the top hat connector on the bottom layer
+      to the right free spot
+    - Device tree overlay required: dtoverlay=pwm-2chan,pin2=13,func2=4
+    - Must use 4-pin PWM fan (recommended: Noctua NF-A4x10 5V PWM)
+    - Do NOT use the tach line of the original fan header
+  * Configuration for Raspberry Pi 5 with hardware mod:
+    - HARDWARE_PWM=1, PWMCHIP=0, PWMCHAN=1
+    - This provides hardware-accelerated fan control at 25 kHz
+
+ -- Francisco Javier Acosta Padilla <fco.ja.ac@gmail.com>  Tue, 17 Feb 2026 12:24:00 +0100
+
 radxa-penta-fan-ctrl (1.0.1-1) unstable; urgency=medium
 
   * Optimize CPU usage and reduce heat generation:
