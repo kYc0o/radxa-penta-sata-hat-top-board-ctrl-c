@@ -173,26 +173,67 @@ You can fine-tune ramp behavior and cooling hold in the `[thermal]` section of t
 
 This setup makes small temperature bumps ramp gently, while rapid heating ramps the fan quickly to catch up. When temperatures start falling, the controller holds the fan speed for a short time and then decreases gradually—helping heat soak dissipate and avoiding premature spin-down.
 
-### GPIO Configuration
+### GPIO and PWM Configuration
 
-Edit `/etc/radxa-penta-fan-ctrl/radxa-penta-fan-ctrl.env` (only if using non-standard GPIOs):
+Edit `/etc/radxa-penta-fan-ctrl/radxa-penta-fan-ctrl.env` (only if using non-standard GPIOs or hardware PWM):
 
 ```bash
-FAN_CHIP=0      # GPIO chip number
-FAN_LINE=27     # GPIO line for fan PWM
-BUTTON_CHIP=0   # GPIO chip number for button
-BUTTON_LINE=17  # GPIO line for button
+FAN_CHIP=0        # GPIO chip number (software PWM / tach)
+FAN_LINE=27       # GPIO line for fan PWM
+BUTTON_CHIP=0     # GPIO chip number for button
+BUTTON_LINE=17    # GPIO line for button
+
+# Hardware PWM (optional, requires hardware mod on RPi5 – see below)
+HARDWARE_PWM=0    # Set to 1 to enable hardware PWM
+PWMCHIP=0         # PWM chip number (e.g., 0 → /sys/class/pwm/pwmchip0)
+PWMCHAN=0         # PWM channel (e.g., 1 → pwm1 on pwmchip0, i.e., GPIO13)
 ```
 
-**Default GPIOs** (Raspberry Pi 5):
+**Default GPIOs** (Raspberry Pi 5, software PWM):
 - Fan PWM: GPIO 27
 - Button: GPIO 17
 - I2C OLED: I2C bus 1 (address 0x3C)
+
+**Raspberry Pi 5 with hardware PWM mod** (`HARDWARE_PWM=1, PWMCHIP=0, PWMCHAN=1`):
+- Fan PWM: GPIO 13 (PWM0_CHAN1) via hardware PWM at 25 kHz
+- Eliminates the software PWM thread — zero CPU overhead
 
 After editing configuration, restart the service:
 ```bash
 sudo systemctl restart radxa-penta-fan-ctrl
 ```
+
+---
+
+## 🔧 Raspberry Pi 5 Hardware PWM Mod
+
+The Penta SATA HAT top board routes the fan header through a 35Ω resistor on the bottom layer that interferes with hardware PWM on GPIO 13. With a small hardware modification you can enable true 25 kHz hardware PWM, which eliminates the software PWM thread entirely.
+
+### What to do
+
+1. **Resistor relocation**: On the bottom layer of the top board, locate the 35Ω resistor immediately below the top hat connector. Move it to the free pad to its right.
+2. **Device tree overlay**: Add the following line to `/boot/firmware/config.txt` and reboot:
+   ```
+   dtoverlay=pwm-2chan,pin2=13,func2=4
+   ```
+3. **Use a 4-pin PWM fan**: A 3-pin fan will not work with hardware PWM. Recommended: **Noctua NF-A4x10 5V PWM**.
+4. **Do NOT connect the tach line** of the original fan header — leave it disconnected.
+
+### Configuration after the mod
+
+In `/etc/radxa-penta-fan-ctrl/radxa-penta-fan-ctrl.env`:
+```bash
+HARDWARE_PWM=1
+PWMCHIP=0
+PWMCHAN=1
+```
+
+Verify the PWM sysfs node appeared after reboot:
+```bash
+ls /sys/class/pwm/pwmchip0/
+```
+
+---
 
 ## 📦 Project Structure
 
@@ -236,11 +277,35 @@ radxa-penta-sata-hat-top-board-ctrl-c/
 - 🔄 **ROCK Pi 4/5** (should work, untested)
 - 🔄 **ROCK 3 series** (should work, untested)
 
-## 🛠️ Build Dependencies
+## 🛠️ Dependencies
+
+### Runtime
+
+| Package | Version | Purpose |
+|---|---|---|
+| `libgpiod2` | ≥ 1.6 | GPIO access (fan PWM, button) |
+| `smartmontools` | any | SSD temperature reading via `smartctl` |
+
+These are pulled in automatically when installing the `.deb` package.
+
+To install them manually:
+```bash
+sudo apt install libgpiod2 smartmontools
+```
+
+### Build-time
 
 ```bash
-sudo apt install build-essential cmake libgpiod-dev g++ smartmontools debhelper
+sudo apt install build-essential cmake libgpiod-dev g++ git debhelper
 ```
+
+| Package | Purpose |
+|---|---|
+| `build-essential` / `g++` | C/C++ compiler toolchain |
+| `cmake` | Build system |
+| `libgpiod-dev` | GPIO headers |
+| `git` | Fetching the `ssd1306` submodule |
+| `debhelper` | Debian packaging helpers |
 
 ## 📝 License
 
