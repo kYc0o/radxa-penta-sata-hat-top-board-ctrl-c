@@ -313,11 +313,11 @@ MIT License - see LICENSE file
 
 ## 🙏 Credits
 
-- **Original Python version**: [Radxa penta-fan-ctrl](https://github.com/radxa/penta-fan-ctrl)
+- **Original Python version**: [Radxa rockpi-penta](https://github.com/radxa/rockpi-penta/)
 - **OLED Library**: [lexus2k/ssd1306](https://github.com/lexus2k/ssd1306)
 
 ## 🔗 Links
 
+- [Explanatory issue why I created this repo](https://github.com/radxa/rockpi-penta/issues/18#issuecomment-3445260735)
 - [Penta SATA HAT Documentation](https://docs.radxa.com/en/accessories/penta-sata-hat)
-- [Original Radxa Repository](https://github.com/radxa/rockpi-penta)
 - [PR #5 Reference](https://github.com/radxa/rockpi-penta/pull/5)
