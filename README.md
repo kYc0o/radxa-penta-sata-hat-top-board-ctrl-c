@@ -319,5 +319,5 @@ MIT License - see LICENSE file
 ## 🔗 Links
 
 - [Explanatory issue why I created this repo](https://github.com/radxa/rockpi-penta/issues/18#issuecomment-3445260735)
-- [Penta SATA HAT Documentation](https://docs.radxa.com/en/accessories/penta-sata-hat)
+- [Penta SATA HAT Top board Documentation](https://docs.radxa.com/en/accessories/storage/penta-sata-hat/sata-hat-top-board)
 - [PR #5 Reference](https://github.com/radxa/rockpi-penta/pull/5)
